@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reload Elite — Routine Tracker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0A0E1A;
+    --surface:  #131929;
+    --card:     #1A2035;
+    --border:   #2A3050;
+    --cyan:     #00D4FF;
+    --purple:   #8B5CF6;
+    --green:    #22D3A0;
+    --red:      #FF4D6D;
+    --text:     #E8ECF0;
+    --muted:    #6B7A99;
+    --font-d:   'Arial Black', 'Impact', Arial, sans-serif;
+    --font-b:   -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-b);
+    min-height: 100vh;
+    padding: 20px 16px 40px;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  header h1 {
+    font-family: var(--font-d);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  header span { color: var(--cyan); }
+  .session-badge {
+    margin-left: auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* SCORE HERO */
+  .score-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .ring-wrap {
+    position: relative;
+    width: 110px; height: 110px;
+    flex-shrink: 0;
+  }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-bg   { fill: none; stroke: var(--border); stroke-width: 8; }
+  .ring-fill { fill: none; stroke-width: 8; stroke-linecap: round;
+               transition: stroke-dashoffset 0.6s ease; }
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .ring-pts {
+    font-family: var(--font-d);
+    font-size: 26px; font-weight: 700;
+    line-height: 1;
+  }
+  .ring-label {
+    font-size: 9px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+  .score-info { flex: 1; }
+  .score-info h2 {
+    font-family: var(--font-d);
+    font-size: 18px; font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .target-line {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .target-line strong { color: var(--cyan); font-size: 14px; }
+  .bar-outer {
+    background: var(--border);
+    border-radius: 6px; height: 8px;
+    overflow: hidden; margin-bottom: 10px;
+  }
+  .bar-inner {
+    height: 100%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    transition: width 0.6s ease;
+  }
+  .score-stats {
+    display: flex; gap: 16px;
+  }
+  .stat { text-align: center; }
+  .stat-val {
+    font-family: var(--font-d);
+    font-size: 18px; font-weight: 700; line-height: 1;
+  }
+  .stat-lbl {
+    font-size: 10px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.3px;
+    margin-top: 2px;
+  }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: var(--font-d);
+    font-size: 13px; font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ADD GAME */
+  .add-game {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 16px;
+    margin-bottom: 20px;
+  }
+  .add-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;
+  }
+  .field input, .field select {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--font-b);
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus {
+    border-color: var(--cyan);
+  }
+  .field select option { background: var(--card); }
+  .pts-preview {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .pts-preview .pts-val {
+    font-family: var(--font-d);
+    font-size: 20px; font-weight: 700;
+    color: var(--cyan);
+  }
+  .btn-add {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    border: none; border-radius: 10px;
+    color: #fff;
+    font-family: var(--font-d);
+    font-size: 16px; font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-add:hover   { opacity: 0.9; }
+  .btn-add:active  { transform: scale(0.98); }
+
+  /* SCORING TABLE */
+  .scoring-grid {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .scoring-grid table { width: 100%; border-collapse: collapse; }
+  .scoring-grid th {
+    background: var(--card);
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--muted);
+    padding: 10px 12px; text-align: left;
+  }
+  .scoring-grid td {
+    padding: 9px 12px;
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+  }
+  .scoring-grid td:last-child { text-align: right; }
+  .pts-tag {
+    background: rgba(0,212,255,0.12);
+    color: var(--cyan);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-family: var(--font-d);
+    font-size: 14px; font-weight: 700;
+  }
+
+  /* GAME LOG */
+  .games-list { margin-bottom: 20px; }
+  .game-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .game-num {
+    width: 32px; height: 32px;
+    background: var(--card);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-d); font-weight: 700; font-size: 14px;
+    color: var(--muted); flex-shrink: 0;
+  }
+  .game-info { flex: 1; }
+  .game-place {
+    font-family: var(--font-d);
+    font-size: 15px; font-weight: 700; line-height: 1;
+  }
+  .game-detail {
+    font-size: 11px; color: var(--muted); margin-top: 2px;
+  }
+  .game-pts {
+    font-family: var(--font-d);
+    font-size: 20px; font-weight: 700;
+    color: var(--cyan);
+  }
+  .game-pts.vr { color: var(--purple); }
+  .btn-del {
+    background: none; border: none;
+    color: var(--muted); cursor: pointer; font-size: 16px;
+    padding: 4px; transition: color 0.15s;
+    line-height: 1;
+  }
+  .btn-del:hover { color: var(--red); }
+
+  .empty-state {
+    text-align: center; padding: 32px 16px;
+    color: var(--muted); font-size: 13px;
+  }
+  .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
+
+  /* SESSION TABS */
+  .session-tabs {
+    display: flex; gap: 8px; margin-bottom: 14px;
+  }
+  .tab {
+    flex: 1; padding: 9px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer;
+    font-family: var(--font-d); font-size: 13px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--muted); text-align: center;
+    transition: all 0.15s;
+  }
+  .tab.active {
+    border-color: var(--cyan); color: var(--cyan);
+    background: rgba(0,212,255,0.08);
+  }
+
+  /* RESET */
+  .btn-reset {
+    width: 100%; padding: 11px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: var(--font-d);
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.15s;
+    margin-bottom: 8px;
+  }
+  .btn-reset:hover { border-color: var(--red); color: var(--red); }
+
+  /* CUTOFF PILL */
+  .cutoff-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(139,92,246,0.12);
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px; color: var(--purple);
+    font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 14px;
+  }
+
+  @media (max-width: 360px) {
+    .score-hero { flex-direction: column; text-align: center; }
+    .score-stats { justify-content: center; }
+    .target-line { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">⚡</div>
+  <div>
+    <h1>Reload <span>Elite</span></h1>
+    <div style="font-size:11px;color:var(--muted);">Routine Tracker — Q4</div>
+  </div>
+  <div class="session-badge" id="matchCount">0 / 24 matchs</div>
+</header>
+
+<!-- SCORE HERO -->
+<div class="score-hero">
+  <div class="ring-wrap">
+    <svg width="110" height="110" viewBox="0 0 110 110">
+      <circle class="ring-bg" cx="55" cy="55" r="46"/>
+      <circle class="ring-fill" id="ringFill" cx="55" cy="55" r="46"
+        stroke="url(#ringGrad)"
+        stroke-dasharray="289"
+        stroke-dashoffset="289"/>
+      <defs>
+        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#00D4FF"/>
+          <stop offset="100%" stop-color="#8B5CF6"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="ring-center">
+      <div class="ring-pts" id="totalPts">0</div>
+      <div class="ring-label">pts cumulés</div>
+    </div>
+  </div>
+  <div class="score-info">
+    <h2>Score total</h2>
+    <div class="target-line">
+      Objectif top 2k : <strong id="targetPts">~350 pts</strong>
+    </div>
+    <div class="bar-outer">
+      <div class="bar-inner" id="progressBar" style="width:0%"></div>
+    </div>
+    <div class="score-stats">
+      <div class="stat">
+        <div class="stat-val" id="statGames">0</div>
+        <div class="stat-lbl">Parties</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="statKills">0</div>
+        <div class="stat-lbl">Kills</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="statVR">0</div>
+        <div class="stat-lbl">VR</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val" id="statAvg">0</div>
+        <div class="stat-lbl">Moy/partie</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION TABS -->
+<div class="section-title">Session</div>
+<div class="session-tabs">
+  <div class="tab active" onclick="switchSession(1)" id="tab1">Session 1</div>
+  <div class="tab" onclick="switchSession(2)" id="tab2">Session 2</div>
+</div>
+
+<!-- ADD GAME FORM -->
+<div class="add-game">
+  <div class="section-title">Ajouter une partie</div>
+  <div class="add-row">
+    <div class="field">
+      <label>Placement</label>
+      <select id="inPlace" onchange="updatePreview()">
+        <option value="1">🏆 1er — Victory Royale</option>
+        <option value="2">2e place</option>
+        <option value="3">3e place</option>
+        <option value="4">4e place</option>
+        <option value="5">5e place</option>
+        <option value="6">6e place</option>
+        <option value="7">7e place</option>
+        <option value="8">8e place</option>
+        <option value="9">9e place</option>
+        <option value="10">10e place</option>
+        <option value="11">11e place</option>
+        <option value="12">12e place</option>
+        <option value="13" selected>Hors top 12</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Kills <small style="color:var(--muted)">(max 10)</small></label>
+      <input type="number" id="inKills" min="0" max="10" value="0"
+             oninput="updatePreview()">
+    </div>
+  </div>
+  <div class="pts-preview">
+    <span>Points gagnés</span>
+    <span class="pts-val" id="ptsPreview">0 pts</span>
+  </div>
+  <button class="btn-add" onclick="addGame()">+ Enregistrer la partie</button>
+</div>
+
+<!-- SCORING REFERENCE -->
+<div class="section-title">Barème officiel</div>
+<div class="cutoff-pill">⚡ 2 pts par kill · max 10 kills comptés</div>
+<div class="scoring-grid" style="margin-bottom:20px">
+  <table>
+    <thead>
+      <tr><th>Placement</th><th>Pts placement</th><th>+ Kills (×2)</th></tr>
+    </thead>
+    <tbody id="scoringBody"></tbody>
+  </table>
+</div>
+
+<!-- GAME LOG -->
+<div class="section-title">Historique — <span id="sessionLabel">Session 1</span></div>
+<div class="games-list" id="gamesList"></div>
+
+<button class="btn-reset" onclick="resetSession()">🗑 Réinitialiser la session</button>
+<button class="btn-reset" onclick="resetAll()" style="color:var(--red);border-color:rgba(255,77,109,0.3)">⚠ Tout effacer</button>
+
+<script>
+// --- SCORING TABLE (placement points officiel Reload Elite) ---
+const PLACEMENT_PTS = {
+  1: 60, 2: 48, 3: 40, 4: 32, 5: 26,
+  6: 20, 7: 14, 8: 10, 9: 7, 10: 5,
+  11: 3, 12: 1
+};
+const TARGET = 350;
+
+let sessions = { 1: [], 2: [] };
+let currentSession = 1;
+
+// Build scoring table
+const tbody = document.getElementById('scoringBody');
+for (let p = 1; p <= 12; p++) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${p === 1 ? '🏆 Victory Royale' : p + 'e place'}</td>
+    <td><span class="pts-tag">${PLACEMENT_PTS[p]}</span></td>
+    <td style="color:var(--muted);font-size:12px">+ kills × 2</td>
+  `;
+  tbody.appendChild(tr);
+}
+const trHors = document.createElement('tr');
+trHors.innerHTML = `<td>Hors top 12</td><td><span class="pts-tag" style="background:rgba(107,122,153,0.15);color:var(--muted)">0</span></td><td style="color:var(--muted);font-size:12px">+ kills × 2</td>`;
+tbody.appendChild(trHors);
+
+function calcPts(place, kills) {
+  const kCapped = Math.min(Math.max(parseInt(kills) || 0, 0), 10);
+  const pPts = PLACEMENT_PTS[parseInt(place)] || 0;
+  return pPts + kCapped * 2;
+}
+
+function updatePreview() {
+  const p = document.getElementById('inPlace').value;
+  const k = document.getElementById('inKills').value;
+  const pts = calcPts(p, k);
+  document.getElementById('ptsPreview').textContent = pts + ' pts';
+}
+
+function addGame() {
+  const placeRaw = document.getElementById('inPlace').value;
+  const killsRaw = document.getElementById('inKills').value;
+  const place = parseInt(placeRaw) || 13;
+  const kills = Math.min(Math.max(parseInt(killsRaw) || 0, 0), 10);
+  const pts   = calcPts(place, kills);
+  const totalMatchs = sessions[1].length + sessions[2].length;
+  if (totalMatchs >= 24) {
+    alert('Maximum 24 matchs atteint (12 par session).');
+    return;
+  }
+  if (sessions[currentSession].length >= 12) {
+    alert('Maximum 12 matchs par session.');
+    return;
+  }
+  sessions[currentSession].push({ place, kills, pts });
+  renderAll();
+  // reset form
+  document.getElementById('inPlace').value = '13';
+  document.getElementById('inKills').value = '0';
+  updatePreview();
+}
+
+function deleteGame(session, index) {
+  sessions[session].splice(index, 1);
+  renderAll();
+}
+
+function switchSession(n) {
+  currentSession = n;
+  document.getElementById('tab1').className = 'tab' + (n===1?' active':'');
+  document.getElementById('tab2').className = 'tab' + (n===2?' active':'');
+  document.getElementById('sessionLabel').textContent = 'Session ' + n;
+  renderGames();
+}
+
+function renderAll() {
+  renderHero();
+  renderGames();
+  const total = sessions[1].length + sessions[2].length;
+  document.getElementById('matchCount').textContent = total + ' / 24 matchs';
+}
+
+function renderHero() {
+  const allGames = [...sessions[1], ...sessions[2]];
+  const total    = allGames.reduce((a, g) => a + g.pts, 0);
+  const kills    = allGames.reduce((a, g) => a + g.kills, 0);
+  const vrs      = allGames.filter(g => g.place === 1).length;
+  const avg      = allGames.length ? Math.round(total / allGames.length) : 0;
+
+  document.getElementById('totalPts').textContent = total;
+  document.getElementById('statGames').textContent = allGames.length;
+  document.getElementById('statKills').textContent = kills;
+  document.getElementById('statVR').textContent    = vrs;
+  document.getElementById('statAvg').textContent   = avg;
+
+  const pct = Math.min(total / TARGET, 1);
+  document.getElementById('progressBar').style.width = (pct * 100) + '%';
+
+  // ring
+  const circ = 289;
+  const offset = circ - circ * pct;
+  document.getElementById('ringFill').style.strokeDashoffset = offset;
+  const color = total >= TARGET ? '#22D3A0' : '#00D4FF';
+  document.getElementById('ringFill').style.stroke = total >= TARGET ? color : 'url(#ringGrad)';
+
+  // target display
+  const remaining = Math.max(TARGET - total, 0);
+  document.getElementById('targetPts').textContent =
+    total >= TARGET ? '✅ Objectif atteint !' : `~${remaining} pts restants`;
+}
+
+function renderGames() {
+  const list = document.getElementById('gamesList');
+  const games = sessions[currentSession];
+  list.innerHTML = '';
+  if (!games.length) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">🎮</div>Aucune partie enregistrée<br>pour cette session</div>`;
+    return;
+  }
+  [...games].reverse().forEach((g, ri) => {
+    const i = games.length - 1 - ri;
+    const isVR = g.place === 1;
+    const card = document.createElement('div');
+    card.className = 'game-card';
+    card.innerHTML = `
+      <div class="game-num">${i + 1}</div>
+      <div class="game-info">
+        <div class="game-place">${isVR ? '🏆 Victory Royale' : g.place + 'e place'}</div>
+        <div class="game-detail">${g.kills} kill${g.kills !== 1 ? 's' : ''} · +${g.kills * 2} pts kills</div>
+      </div>
+      <div class="game-pts ${isVR ? 'vr' : ''}">+${g.pts}</div>
+      <button class="btn-del" onclick="deleteGame(${currentSession},${i})">✕</button>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function resetSession() {
+  if (confirm(`Réinitialiser la Session ${currentSession} ?`)) {
+    sessions[currentSession] = [];
+    renderAll();
+  }
+}
+
+function resetAll() {
+  if (confirm('Tout effacer (les 2 sessions) ?')) {
+    sessions = { 1: [], 2: [] };
+    renderAll();
+  }
+}
+
+// Init
+updatePreview();
+renderAll();
+</script>
+</body>
+</html>
